@@ -1,0 +1,7 @@
+phoenix/build/*.o
+phoenix/build/*.c
+testy/build/*.o
+testy/build/*.c
+testy/testy.oci/
+testy/testy.tar
+testy/testy.bundle

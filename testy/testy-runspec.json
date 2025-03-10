@@ -1,0 +1,9 @@
+{
+    "machine": "larch",
+    "name": "testy",
+    "image": "testy",
+    "type": "docker",
+
+    "proxyname": "test1.jordanschatz.com",
+    "ip": "fd38:dde8:32dd::3"
+}

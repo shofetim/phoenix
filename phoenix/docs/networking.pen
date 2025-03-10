@@ -1,0 +1,175 @@
+@title{Networking}
+
+
+TODO: This design is wrong. There should instead be one wireguard interface per
+minion, each minion should be assigned a /64, each container should route all of
+it's traffic over the veth interface to the bridge, and then from there to the
+outside world or to other minions. Processes can change their ipv6 address (i.e.
+if they move minions) but their names should be constant.
+
+This currently only accounts for handling of container networking.
+
+
+@section{At Master Startup}
+
+@ol{
+  @li{Install packages that supply wireguard tools, nginx, certificate management etc.}
+  @li{Setup & start nginx (proxy)}
+  @li{Generate wireguard public & private keys}
+  @li{
+    Create wireguard interface name @code`wg-master` with those credentials, and
+    the known IPv6 address and the supplied IPv4 public address.
+  }
+}
+
+
+@section{At Master Shutdown}
+
+@ol{
+  @li{Delete wireguard interface}
+  @li{Shut down proxy}
+  @li{Remove proxy config}
+}
+
+
+@section{At Minion Startup}
+
+@ol{
+  @li{Generate wireguard public & private keys}
+  @li{
+    Create wireguard interface name @code`wg-minion` with those credentials, and
+    the provided IPv6 address and provided IPv4 public address.
+  }
+  @li{Add the master as a wireguard peer}
+  @li{
+    Send a request to the master to join its wireguard network, including the
+    minion's public and private IPs, and the minion's public key.
+  }
+  @li{Create a bridge network}
+  @li{Enable IPv4 forwarding}
+  @li{Allow iptables packet forwarding}
+}
+
+
+@section{At Minion Shutdown}
+
+@ol{
+  @li{Delete the wireguard interface}
+  @li{Disable IPv4 forwarding}
+  @li{Update iptables to drop forwarded packets}
+  @li{Delete the bridge interface}
+}
+
+
+@section{When a Service is deployed}
+
+On the master:
+
+@ul{
+  @li{Request to deploy a service comes into the master.}
+  @li{A IPv6 address is provided in the spec, or added to the spec.}
+  @li{A wg public & private keypair is created and added to the spec.}
+  @li{Expand links and add them to the spec}
+  @li{
+    The master sets up its end of the wg peer, using the service private IP, and
+    the generated service public key.
+  }
+  @li{Add a route from the master to the service}
+  @li{
+    Create a nginx virtualhost, to proxy the service, if in the spec. The
+    virtualhost may already exist, if so, update it.
+  }
+  @li{The request is passed on to the minion.}
+}
+
+
+On the minion:
+
+@ul{
+ @li{The container is started, thereby creating the network namespace}
+ @li{
+   The network namespace is named, via @code`ip attach` so that it can be more
+   easily accessed via the IP tool.
+ }
+ @li{Create a wireguard endpoint}
+ @li{Move the endpoint into the container's namespace}
+ @li{
+   Configure the endpoint
+   @ul{
+     @li{Add a peer to the master}
+     #todo, this needs to be reciprocal, the other ends need to add us
+     @li{Add a peer for every linked service} 
+   }
+ }
+ @li{
+   Send a ping from the container, to the master, so the master knows the port #
+   of the service's wireguard endpoint. (todo, maybe a keep alive setting instead?)
+ }
+ @li{Creates a veth pair}
+ @li{
+   Slave one end of the pair to the minion's bridge network. Move the other
+   end into the container namespace.
+ }
+ @li{
+   Generate an IPv4 address for the container end of the veth pair, and
+   configure it.
+ }
+ @li{Setup the route inside the container}
+}
+
+
+@section{When a service is updated}
+
+Changing the container's name, or IP isn't permitted. We @em{can} change which
+minion it is running under though.
+
+On the master
+@ul{
+  @li{Request to update a service comes into the master.}
+  @li{
+    Check if this update changes the minion the service runs on. If it does then
+    follow the below process. If not, then just pass to the minion to update.
+  }
+  @li{The request is passed on to the @em{new} minion.}
+  @li{The current wireguard peer for this service is deleted.}
+  @li{Delete the route from the master to the service (this may happen automatically)}
+  @li{
+    The master sets up its end of the wg peer, using the minion public IP, the
+    service private IP, and the generated service public key.
+  }
+  @li{Add a route from the master to the service}
+  @li{
+    Create or update a nginx virtualhost, to proxy the service, if in the spec.
+  }
+  @li{Send a delete request on to the old minion}
+}
+
+On the minion
+@ul{
+  @li{The minion may receive a delete request, and process it normally.}
+  @li{Otherwise it will either receive an create request, covered earlier}
+  @li{Or an update. An update is equivalent to a delete and create request.}
+}
+
+
+@section{When a Service is Deleted}
+
+On the master
+
+@ul{
+  @li{Delete matching WG peer}
+  @li{Delete matching route}
+  @li{
+    Check the virtualhost, if no other services are backing it, delete it. If
+    other services are backing it, then just update it.
+  }
+}
+
+On the minion
+
+@ul{
+  @li{Stop the container}
+  @li{Delete the matching wireguard interface}
+  @li{Delete the matching veth peer}
+  @li{Delete the named container namespace}
+}

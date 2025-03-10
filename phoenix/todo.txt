@@ -1,0 +1,19 @@
+# Todos
+
+- Tighten networking rules, similar to what [Docker recently
+  did](https://www.docker.com/blog/docker-engine-28-hardening-container-networking-by-default/)
+
+
+  - Networking
+    - Add wireguard interface to container & setup namespaces
+    - Add veth interface to container & setup namespaces
+    - Clean up when container exits
+  - Services should not be deleted from the _master_ database. They should be
+    given a status of deleted, and their ip & wg keys retained. They _should_ be
+    deleted from the minion, or treated differently on the minion.
+  - todo format links correctly
+  - Process supervision bug
+  - Restarting a container that died needs to insure the network namespace is ok.
+  - Publish it
+  - Images need to be moved into place.
+  - Test
