@@ -30,6 +30,12 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ```
 
+
+FYI that work on Phoenix is paused. It may restart, but likely in a very
+different form. Phoenix proved an effective testing ground, but the results of
+those testing point development in a dramatically different direction.
+
+
 ## What it is
 
 Phoenix is a "Multi-Server Process Supervisor" — its job is to reliably run
@@ -152,13 +158,8 @@ The entire system is easy to setup, using a single, small, cross platform
 
 ## Version / Stability
 
-Expect breaking changes.
-
-The system is used in production, and is built out of very reliable components,
-the system as a whole is still undergoing regular changes.
-
-Only the docker supervision is currently open sourced — open sourcing support for running
-binaries and Firecracker VMs is planned for 2025.
+Expect breaking changes. Development is on hiatus, and will likely resume in an
+entirely different approach.
 
 ## Cluster Setup
 
